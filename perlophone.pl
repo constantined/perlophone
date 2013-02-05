@@ -23,12 +23,13 @@ $ENV{MP3TAG_DECODE_UNICODE} = 1;
 $ENV{MP3TAG_DECODE_UTF8} = 1;
 MP3::Tag->config(write_v24 => 1);
 
-mkdir $music_path unless -d $music_path;
-
 
 our ($limit, $prefetch_count, $xmms_end_foresight, $xmms_socket, $lastfm_key, $settings,
 	$music_path, $music_max_files);
 require config;
+
+
+mkdir $music_path unless -d $music_path;
 
 
 my $cmds = {
@@ -181,6 +182,7 @@ sub addToPlayQueue {
 	}
 }
 sub findNextFile {
+	my ($to_playlist) = @_;
 	unless ( @find_queue ) {
 		say 'unless @find_queue';
 		$cmds->{$s->{mode}}->();
@@ -196,7 +198,12 @@ sub findNextFile {
 	} else {
 		$searchers{$unic} = countEvents('find_file');
 		$found_urls{$unic} = [];
-		fireEvent('find_file', {artist => $artist, title => $title, unic => $unic});
+		fireEvent('find_file', {
+			artist => $artist,
+			title => $title,
+			unic => $unic,
+			to_playlist => $to_playlist
+		});
 	}
 }
 addEvent('file_found', sub {
@@ -204,6 +211,7 @@ addEvent('file_found', sub {
 	my $title = $_[0]->{title};
 	my $unic = $_[0]->{unic};
 	my $urls = $_[0]->{urls};
+	my $to_playlist = $_[0]->{to_playlist};
 	my $filename = $unic.'.mp3';
 	$searchers{$unic}--;
 	push $found_urls{$unic}, @$urls if $urls;
@@ -222,11 +230,18 @@ addEvent('file_found', sub {
 				$mp3->title_set($title, 1);
 				$mp3->{ID3v2}->write_tag(1);
 				say color('GREEN'), 'FOUND: ', $filename, color('RESET');
-				addToPlayQueue($filename);
+				if ( $to_playlist ) {
+					$xmms->playlist->add_url('file://'.$music_path.$filename)->notifier_set(sub {
+						say color('BOLD CYAN'), 'ADDED TO PLAYLIST: ', color('RESET'), $filename;
+						$xmms->playback_start() unless $playback_status;
+					});
+				} else {
+					addToPlayQueue($filename);
+				}
 			};
 		} else {
 			say color('BOLD RED'), 'NOT FOUND: ', $filename, color('RESET');
-			addToPlayQueue('');
+			addToPlayQueue('') unless $to_playlist;
 		}
 		undef $found_urls{$unic};
 		undef $searchers{$unic};
@@ -380,24 +395,10 @@ sub sim {
 sub add {
 	my ($artist, $track) = @_;
 	say( $artist.' - '.$track );
-	my $input = $artist."\n".$track."\n";
-	utf8::encode($input); #без этого не обойтись
-	my $run; $run = run_command($searcher, '<' => \$input, '>' => sub {
-		my ($data) = @_;
-		unless ( $data ) {
-			undef $input;
-			undef $run;
-			return;
-		}
-		utf8::decode($data); #без этого не обойтись
-		print color('YELLOW'), $data, color('RESET');
-		if ( $data =~ m#<file>(\S+)</file># ) {
-			$xmms->playlist->add_url('file://'.$music_path.$1);
-			fireEvent('add_success');
-		} elsif ( $data =~ m#<notfound>(\S+)</notfound># ) {
-			fireEvent('add_fail');
-		}
-	});
+	unshift @find_queue, [$artist, $track];
+	findNextFile(1);
+#			fireEvent('add_success');
+#			fireEvent('add_fail');
 }
 sub skip {
 	playNextFile(sub {
