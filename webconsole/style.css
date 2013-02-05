@@ -1,0 +1,145 @@
+html {
+	padding: 0;
+	height: 100%;
+	font-size: 16px;
+	font-family: "Trebuchet MS", sans-serif;
+	overflow: hidden;
+}
+body {
+	margin: 0;
+	height: 100%;
+}
+table {
+	width: 100%;
+	height: 100%;
+	border-spacing: 0;
+}
+td {
+	padding: 0;
+	vertical-align: middle;
+}
+input[type="checkbox"] {
+	margin: 0;
+}
+.reply {
+	cursor: pointer;
+}
+.reply:hover {
+	text-decoration: underline;
+}
+span.reply {
+	color: #fd6500;
+}
+div.highlight {
+	padding: 0 !important;
+	background: #e4fdc9;
+	border: 1px dashed #F00;
+}
+td.cfg-left {
+	text-align: right;
+}
+td.cfg-right {
+	text-align: left;
+}
+.button {
+	padding: 0 5px;
+	background: none;
+	border: none;
+	outline: 2px outset #000;
+}
+.button_active {
+	color: #FFF;
+	background: #F23232;
+	outline: 2px inset #000;
+}
+#popup {
+	position: absolute;
+	display: none;
+	width: 100%;
+	height: 100%;
+	z-index: 999;
+	background: #FFFFFF;
+	text-align: center;
+}
+#settingsForm {
+	margin: 0 auto;
+	width: auto;
+	height: auto;
+	border-spacing: 10px;
+	font-size: 13px;
+	border-collapse: collapse;
+}
+#settingsForm td {
+	padding: 10px;
+	background: #EEEEEE;
+	border: 2px solid #FFFFFF;
+}
+#scrollbox {
+	width: 100%;
+	overflow-x: hidden;
+	overflow-y: scroll;
+	color: #FFF;
+	background: #000;
+}
+#scrollbox div {
+	padding: 1px;
+}
+#hbox {
+	height: 1px;
+}
+#textbox {
+	width: 100%;
+}
+#smiles_box {
+	position: absolute;
+	display: none;
+	line-height: 71px;
+	border-top: 1px solid #CCC;
+	border-left: 1px solid #CCC;
+	background: #FFF;
+	overflow-x: scroll;
+	z-index: 9;
+
+	text-align: center;
+	font-size: 50px;
+}
+#send_button_wrapper {
+	padding: 0 21px 0 15px;
+	width: 1px;
+	white-space: nowrap;
+	border: 1px solid #CCC;
+	text-align: center;
+}
+#send_button_wrapper ul {
+	margin: 0;
+	padding: 0;
+}
+#statusbar {
+	padding: 5px 10px;
+	font-size: 13px;
+	text-align: center;
+	background: #DDDDDD;
+}
+#settings_link {
+	float: left;
+}
+#anonymous_mode {
+	float: left;
+	margin-left: 20px;
+}
+#symb_count {
+	float: right;
+	margin-right: 20px;
+}
+#speed {
+	float: right;
+	margin-right: 20px;
+}
+#online {
+	float: right;
+}
+
+
+
+
+
