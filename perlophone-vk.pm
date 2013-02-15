@@ -21,7 +21,7 @@ my $uri = URI->new('https://api.vk.com/method/audio.search');
 
 addEvent('find_file', sub {
 	my ($arg) = @_;
-	my $artist = canonical_s($arg->{artist});
+	$arg->{artist} =~ s#é#e#g; my $artist = canonical_s($arg->{artist});
 	my $title = canonical_s($arg->{title});
 	$uri->query_form({
 		access_token => $s->{vk_access_token},
@@ -29,15 +29,17 @@ addEvent('find_file', sub {
 		sort => 2,
 		count => $count
 	});
+	#say $uri->as_string();
 	http_get $uri->as_string(), headers => {'Referer' => undef},  sub {
-		#print Dumper $_[0];
-		my $json = decode_json($_[0]);
+		unless ( $_[0] ) {
+			warn 'vk.com returned an empty response';
+		}
+		my $json = decode_json($_[0] =~ s#&amp;#&#gr);
 		shift $json->{response};
 		my @found;
 		for my $song ( @{$json->{response}} ) {
 			#print Dumper $song;
-			if (
-			  canonical_s($song->{artist} or '') eq $artist
+			if (canonical_s($song->{artist} or '') eq $artist
 			  && canonical_s($song->{title} or '') eq $title ) {
 				push @found, $song->{url};
 			}

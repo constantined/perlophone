@@ -26,15 +26,15 @@ sub pychat_cb {
 		$body =~ m#<a href="event:insert,(\d+)">#s;
 		my $msg_id = $1;
 		if ( $body =~ m/#(art|tag|sim)([^\[\]]+)$/i && $list_time < time() && !$locked ) {
-			run_command('#'.$1.$2);
+			runCommand('#'.$1.$2);
 			$list_time = time()+rand(60*60);
 			$locked = $msg_id;
 		} elsif ( $body =~ m/#(add)([^\[\]]+)$/i && $add_time < time() && !$locked ) {
-			run_command('#'.$1.$2);
+			runCommand('#'.$1.$2);
 			$add_time = time()+rand(10*60);
 			$locked = $msg_id;
 		} elsif ( $body =~ m/#(skip|next|drop)/i && $xmms_playtime/1000 > 30 ) {
-			run_command('#'.$1);
+			runCommand('#'.$1);
 			$locked = $msg_id;
 		}
 	}

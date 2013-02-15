@@ -724,7 +724,7 @@ var set_missed_msgs = function () {
 }
 var reconnect = function () {
 	if ( typeof ws == 'object' && typeof ws.close == 'function' ) ws.close();
-	ws = new WebSocket('ws://'+location.host+':7654');
+	ws = new WebSocket('ws://'+location.host);
 	ws.onopen = function () {
 		preloaded = false;
 		$(scrollbox).html('');

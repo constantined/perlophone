@@ -46,7 +46,7 @@ my ($lastfm, $xmms, $mode_count, $mode_unic, $mode_unic_play, $playback_status, 
 	$track, $xmms_id_changed, $xmms_duration,
 	@find_queue, @play_queue, %events, %searchers, %found_urls);
 my $mode_status = 0;
-
+my $hyphen = '[\x2D\x{2010}\x{2011}\x{2043}\x{207B}\x{208B}\x{FE63}\x{FF0D}]';
 
 
 ###===--- EVENTS ---===###
@@ -89,7 +89,7 @@ sub canonical {
 sub canonical_s {
 	my ($str) = @_;
 	$str =~ s#^[^\w]*(.*?)[^\w]*$#$1#s; # trim
-	$str =~ s#[^\w]+# #sg; # replaces every [^w]+ with _
+	$str =~ s#[^\w]+# #sg; # replaces every [^w]+ with one space
 	return uc $str;
 }
 sub countNonEmpty {
@@ -272,10 +272,10 @@ sub playNextFile {
 }
 sub modeCallback {
 	my ($result, $input) = @_;
-	if ($input && $mode_status) {
-		fireEvent('mode_fail');
-		return;
-	}
+#	if ($input && $mode_status) {
+#		fireEvent('mode_fail');
+#		return;
+#	}
 	if ( $input ) {
 		if ( $result ) {
 			$mode_status = 1;
@@ -303,6 +303,25 @@ sub modeCallback {
 		$i++;
 	}
 	findNextFile(); # вызывается и при смене режима, и при запросе новых названий треков
+}
+sub add {
+	my ($artist, $track) = @_;
+	say( $artist.' - '.$track );
+	unshift @find_queue, [$artist, $track];
+	findNextFile(1);
+#			fireEvent('add_success');
+#			fireEvent('add_fail');
+}
+sub skip {
+	playNextFile(sub {
+		$xmms->playlist_set_next_rel(1)->notifier_set(sub {
+			$xmms->playback_tickle->notifier_set(sub {
+				pychat_answ('Трек пропущен.');
+				return 1;
+			});
+			return 1;
+		});
+	});
 }
 sub art {
 	my $input = shift;
@@ -392,40 +411,21 @@ sub sim {
 		});
 	}
 }
-sub add {
-	my ($artist, $track) = @_;
-	say( $artist.' - '.$track );
-	unshift @find_queue, [$artist, $track];
-	findNextFile(1);
-#			fireEvent('add_success');
-#			fireEvent('add_fail');
-}
-sub skip {
-	playNextFile(sub {
-		$xmms->playlist_set_next_rel(1)->notifier_set(sub {
-			$xmms->playback_tickle->notifier_set(sub {
-				pychat_answ('Трек пропущен.');
-				return 1;
-			});
-			return 1;
-		});
-	});
-}
-sub run_command {
+sub runCommand {
 	my ($cmd, $eval) = @_;
 	if ($cmd =~ m/^#(art|tag|sim|add|skip|next|drop)(.*)$/i) {
 		my $mode = lc $1;
 		my $inp = $2;
-		my @args = split /(?<!\\)[\x2D\x{2010}\x{2011}\x{2043}\x{207B}\x{208B}\x{FE63}\x{FF0D}]/,
-			$inp;
+		my @args = split /(?<!\\)$hyphen/, $inp;
 		for my $arg ( @args ) {
-			$arg = (trim($arg) =~ s#(?<!\\)\\##sgr);
+			$arg = (trim($arg) =~ s#\\($hyphen)#$1#sgr);
 		}
 		if ( (@args == 0 && grep{$_ eq $mode}qw(skip next drop))
 		  or (@args == 1 && grep{$_ eq $mode}qw(art tag sim))
 		  or (@args == 2 && grep{$_ eq $mode}qw(sim add)) ) {
 			$cmds->{$mode}->(@args);
 		} elsif (!$eval) {
+			warn 'Invalid parameter count!';
 			pychat_unlock();
 		}
 	} elsif ($eval) {
@@ -468,12 +468,12 @@ for my $plugin (glob $ENV{'BASE'}.'perlophone-*.pm') {
 	require $plugin;
 }
 
+runCommand( '#'.$s->{mode}.' '.join(' - ',map {s#($hyphen)#\\$1#sgr} $s->{mode_input}) )
+	if $s->{mode} && $s->{mode_input};
 
 
-$cmds->{$s->{mode}}->($s->{mode_input}) if $s->{mode} && $s->{mode_input};
-
-
-my $w = AnyEvent->timer(after => 60, interval => 60*30, cb => sub {
+my $w = AnyEvent->timer(after => 60, interval => 60*10, cb => sub {
+	skip() unless $playback_status;
 	cleanMusicDir();
 });
 

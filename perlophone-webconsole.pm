@@ -47,7 +47,7 @@ our $server = AnyEvent::HTTP::Server->new(
 						$ws->onmessage(sub {
 							my ($msg) = @_;
 							$msg =~ s#[–]#-#sg;
-							run_command($msg, 1);
+							runCommand($msg, 1);
 						});
 						$ws->onclose(sub {
 							*STDOUT = $STDOUT;
